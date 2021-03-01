@@ -1,2 +1,8 @@
 # AdaSmooth
 An optimizer that transitions from SGD to Adam via weighted average of calculated steps
+
+A lot of the talk about making an optimizer as fast as Adam that generalizes as well as SGD revolves around the idea that Adam does not generalize as well in later stages of optimization. We now know that Adam generalizes poorly due to the adaptive parameters initializing to poor values in the early stages because the moving averages are so volatile and heavily influenced by the first few steps. Given that we use a running average for computational efficency instead of a true windowed moving average, large values can corrupt these parameters and it is impossible for the topimizer to ever forget these values. It's kind of a vicious cycle where bad adaptive gradient information causes a bad step which causes bad gradient information, etc. The end result is poor optimization trajectory that affects final performance.
+
+One of the ways we remedy this is to add a warmup phase where we use small step sizes in the early stages to allow adaptive params to initialize to steady values before ramping up the step size and getting the convergence speed benefits of Adam.
+
+However, there had been studies that show Adam actually outperforms SGD in final generalization for large networks, when adaptive params are initialized to good values. Recently i've been experimenting with the idea of transitioning from SGD to an Adaptive optimizer by doing a weighted average of the SGD and Adam step, where the SGD step is weighted less as optimization goes on. This allows for Adam to initialize to good values as it is guided by SGD. And so far it seems to perform pretty well. Any thoughts?
