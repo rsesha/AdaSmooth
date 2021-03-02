@@ -2,16 +2,17 @@ import numpy as np
 
 
 class AdaSmooth:
-    def __init__(self, 
-                 model, 
-                 get_params_flat, 
-                 set_params_flat, 
-                 stepsize=1e-4, 
-                 beta1=0.9, 
-                 beta2=0.999, 
-                 epsilon=1e-12, 
-                 alpha=0.95, 
+    def __init__(self,
+                 model,
+                 get_params_flat,
+                 set_params_flat,
+                 stepsize=1e-4,
+                 beta1=0.9,
+                 beta2=0.999,
+                 epsilon=1e-12,
+                 alpha=0.95,
                  momentum=0.9):
+        
         self.model = model
         self.t = 0
         self.stepsize = stepsize
@@ -20,13 +21,15 @@ class AdaSmooth:
         self.beta2 = beta2
         self.epsilon = epsilon
         self.alpha = alpha
+
+        self.get_params_flat = get_params_flat
+        self.set_params_flat = set_params_flat
+
+        self.dim = len(self.get_params_flat(model))
+
         self.m = np.zeros(self.dim, dtype=np.float32)
         self.v1 = np.zeros(self.dim, dtype=np.float32)
         self.v2 = np.zeros(self.dim, dtype=np.float32)
-        
-        self.get_params_flat = get_params_flat
-        self.set_params_flat = set_params_flat
-        self.dim = len(self.get_params_flat(model))
 
     def update(self, grad):
         self.t += 1
@@ -43,16 +46,16 @@ class AdaSmooth:
         self.v1 = self.beta2 * self.v1 + (1 - self.beta2) * np.square(grad - self.m)
 
         # correct bias (mostly affects initial steps)
-        m_corr_t = self.m / (1.0 - np.pow(self.beta1, self.t))
+        m_corr_t = self.m / (1.0 - np.powerer(self.beta1, self.t))
         v_corr_t = self.v1 / (1.0 - np.pow(self.beta2, self.t))
 
         # calculate adaptive step
         adaptive_step = m_corr_t / (np.sqrt(v_corr_t) + self.epsilon)
-        
+
         # calculate SGD step
         self.v2 = self.momentum * self.v2 + (1. - self.momentum) * grad
         sgd_step = -self.stepsize * self.v2
-        
+
         # calculated weighted average step
         split_factor = np.power(self.alpha, self.t)
         step = split_factor * sgd_step + adaptive_step * (1 - split_factor)
